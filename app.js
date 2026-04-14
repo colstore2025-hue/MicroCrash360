@@ -1,6 +1,6 @@
-// ===============================
-// MICROCASH360 - APP CONTROLLER PRO
-// ===============================
+// ========================================
+// MICROCASH360 - APP CONTROLLER PRO FINAL
+// ========================================
 
 // IMPORTS
 import { AuthService } from "./auth/authService.js";
@@ -20,16 +20,16 @@ const auth = new AuthService();
 const loanEngine = new LoanEngine();
 const paymentService = new PaymentService();
 
-// ESTADO GLOBAL (MVP)
+// ESTADO GLOBAL
 let currentUser = null;
 let currentLoan = null;
 
 // INIT
 render(app, renderLogin());
 
-// ===============================
+// ========================================
 // EVENTOS PRINCIPALES
-// ===============================
+// ========================================
 
 document.addEventListener("click", async (e) => {
 
@@ -37,24 +37,38 @@ document.addEventListener("click", async (e) => {
   // LOGIN
   // =========================
   if (e.target.id === "loginBtn") {
-    const phone = document.getElementById("phone").value;
+    try {
+      const phone = document.getElementById("phone").value;
 
-    await auth.login(phone);
-    currentUser = await auth.verifyOTP("0000");
+      await auth.login(phone);
 
-    render(app, renderDashboard(currentUser));
+      // ⚠️ Aquí deberías pedir el OTP real en UI
+      currentUser = await auth.verifyOTP("0000");
+
+      // 🔥 Cargar préstamos del usuario
+      const loans = await paymentService.getUserLoans(currentUser.uid);
+
+      if (loans.length > 0) {
+        currentLoan = loans[0];
+        showLoanDetail(currentLoan);
+      } else {
+        render(app, renderDashboard(currentUser));
+      }
+
+    } catch (err) {
+      alert("Error en login: " + err.message);
+    }
   }
 
   // =========================
   // SIMULAR PRÉSTAMO
   // =========================
   if (e.target.id === "simulateBtn") {
-    const amount = Number(document.getElementById("amount").value);
-
     try {
+      const amount = Number(document.getElementById("amount").value);
+
       const result = loanEngine.calculateLoan(amount, 10);
 
-      // Guardamos temporal
       currentLoan = result;
 
       render(app, renderSimulation(result));
@@ -68,36 +82,51 @@ document.addEventListener("click", async (e) => {
   // SOLICITAR PRÉSTAMO
   // =========================
   if (e.target.id === "requestBtn") {
+    try {
+      const approval = loanEngine.approveLoan(
+        {
+          history: "good",
+          income: 1200000,
+          age: 30,
+          loansCount: 1
+        },
+        currentLoan.amount
+      );
 
-    const approval = loanEngine.approveLoan({
-      history: "good",
-      income: 1200000
-    });
+      if (!approval.approved) {
+        app.innerHTML = `<h1>❌ Crédito rechazado</h1>`;
+        return;
+      }
 
-    if (!approval.approved) {
-      app.innerHTML = `<h1>❌ Crédito rechazado</h1>`;
-      return;
+      // 🔥 Crear préstamo en Firebase
+      const loan = await paymentService.createLoan(
+        currentUser.uid,
+        currentLoan
+      );
+
+      currentLoan = loan;
+
+      showLoanDetail(loan);
+
+    } catch (err) {
+      alert("Error al crear préstamo: " + err.message);
     }
-
-    // Crear préstamo real con cuotas
-    const loan = await paymentService.createLoan(
-  currentUser.uid,
-  currentLoan
-);
-
-    currentLoan = loan;
-
-    showLoanDetail(loan);
   }
 
   // =========================
   // PAGAR CUOTA
   // =========================
   if (e.target.dataset.pay) {
-    const installmentNumber = Number(e.target.dataset.pay);
-
     try {
-      paymentService.payInstallment(currentLoan.id, installmentNumber);
+      const installmentNumber = Number(e.target.dataset.pay);
+
+      const updatedInstallments = await paymentService.payInstallment(
+        currentLoan.id,
+        installmentNumber
+      );
+
+      // actualizar local
+      currentLoan.installments = updatedInstallments;
 
       showLoanDetail(currentLoan);
 
@@ -108,16 +137,17 @@ document.addEventListener("click", async (e) => {
 
 });
 
-// ===============================
+// ========================================
 // UI DETALLE DE PRÉSTAMO
-// ===============================
+// ========================================
 
 function showLoanDetail(loan) {
-  const summary = paymentService.getLoanSummary(loan.id);
+
+  const summary = paymentService.getLoanSummary(loan);
 
   const installmentsHTML = loan.installments.map(inst => `
-    <div style="margin-bottom:10px; padding:10px; background:#111;">
-      <p>Cuota #${inst.number}</p>
+    <div style="margin-bottom:10px; padding:10px; background:#111; border-radius:10px;">
+      <p><strong>Cuota #${inst.number}</strong></p>
       <p>Valor: $${inst.amount}</p>
       <p>Estado: ${inst.status}</p>
       ${
@@ -130,7 +160,7 @@ function showLoanDetail(loan) {
 
   app.innerHTML = `
     <div class="screen">
-      <h2>Préstamo activo</h2>
+      <h2>💳 Préstamo activo</h2>
 
       <p>Total: $${summary.total}</p>
       <p>Pagado: $${summary.paid}</p>
@@ -139,7 +169,7 @@ function showLoanDetail(loan) {
 
       <hr>
 
-      <h3>Cuotas</h3>
+      <h3>📅 Cuotas</h3>
       ${installmentsHTML}
 
       <br>
@@ -148,11 +178,14 @@ function showLoanDetail(loan) {
   `;
 }
 
-// ===============================
-// LOOP DE COBRANZA (SIMULACIÓN)
-// ===============================
+// ========================================
+// (OPCIONAL) LOOP DE COBRANZA FUTURO
+// ========================================
 
-// Cada 5 segundos revisa mora
+// ⚠️ Desactivado porque ahora usas Firebase
+// Esto luego va en backend (Node.js / Cloud Functions)
+
+/*
 setInterval(() => {
   paymentService.checkLatePayments();
 
@@ -161,5 +194,5 @@ setInterval(() => {
   if (actions.length > 0) {
     console.log("⚠️ Acciones de cobranza:", actions);
   }
-
 }, 5000);
+*/
