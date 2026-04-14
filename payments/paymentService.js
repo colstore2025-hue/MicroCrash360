@@ -1,6 +1,7 @@
 // ========================================
 // MICROCASH360 - PAYMENT & COLLECTION ENGINE
 // ========================================
+import { db, collection, addDoc } from "../config/firebase.js";
 
 export class PaymentService {
   constructor() {
