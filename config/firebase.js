@@ -5,6 +5,13 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
 import { 
+  query, 
+  where 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+export { query, where };
+
+import { 
   getAuth, 
   signInWithPhoneNumber, 
   RecaptchaVerifier 
