@@ -1,5 +1,5 @@
 // ========================================
-// MICROCASH360 - LOAN ENGINE PRO (FINAL)
+// MICROCASH360 - LOAN ENGINE PRO (INTEGRADO)
 // ========================================
 
 export class LoanEngine {
@@ -79,17 +79,17 @@ export class LoanEngine {
     if (user.income >= 1000000) score += 10;
     if (user.income < 500000) score -= 10;
 
-    // Edad (ejemplo simple)
+    // Edad
     if (user.age >= 25 && user.age <= 55) score += 5;
 
-    // Frecuencia de uso
+    // Uso previo
     if (user.loansCount > 3) score += 5;
 
     return score;
   }
 
   // ========================================
-  // 💰 MONTO MÁXIMO SEGÚN RIESGO
+  // 💰 MONTO MÁXIMO SEGÚN SCORE
   // ========================================
   getMaxAmountByScore(score) {
     if (score >= 80) return 2000000;
@@ -100,12 +100,17 @@ export class LoanEngine {
   }
 
   // ========================================
-  // ✅ APROBACIÓN FINAL
+  // ✅ APROBACIÓN FINAL (INTEGRADA)
   // ========================================
   approveLoan(user, requestedAmount) {
+    if (!requestedAmount) {
+      throw new Error("Monto solicitado requerido");
+    }
+
     const score = this.evaluateRisk(user);
     const maxAllowed = this.getMaxAmountByScore(score);
 
+    // ❌ Rechazado
     if (maxAllowed === 0) {
       return {
         approved: false,
@@ -114,15 +119,18 @@ export class LoanEngine {
       };
     }
 
+    // ⚠️ Ajuste automático
     if (requestedAmount > maxAllowed) {
       return {
         approved: true,
         approvedAmount: maxAllowed,
         adjusted: true,
-        score
+        score,
+        message: "Monto ajustado por riesgo"
       };
     }
 
+    // ✅ Aprobado normal
     return {
       approved: true,
       approvedAmount: requestedAmount,
@@ -132,10 +140,23 @@ export class LoanEngine {
   }
 
   // ========================================
+  // 🧠 PERFIL FINANCIERO (NUEVO PRO)
+  // ========================================
+  buildUserProfile(user) {
+    return {
+      history: user.history || "unknown",
+      income: user.income || 0,
+      age: user.age || 0,
+      loansCount: user.loansCount || 0,
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  // ========================================
   // 🧠 HOOK PARA IA FUTURA
   // ========================================
   async evaluateWithAI(user) {
-    // Aquí luego conectas modelo IA
+    // Aquí conectarás modelo real (TensorFlow / API externa)
     return this.evaluateRisk(user);
   }
 }
