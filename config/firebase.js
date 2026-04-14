@@ -21,9 +21,12 @@ import {
 
 // 🔑 TU CONFIG REAL
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_DOMINIO",
+  apiKey: "AIzaSyCS9blfYpQTzOkKKondQjGmwC0mEqWMZGQ",
+  authDomain: "microcash360.firebaseapp.com",
   projectId: "microcash360",
+  storageBucket: "microcash360.firebasestorage.app",
+  messagingSenderId: "605473385081",
+  appId: "1:605473385081:web:54453aa4fd563eca0842a8"
 };
 
 // INIT
