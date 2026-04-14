@@ -1,21 +1,26 @@
-// ===============================
-// MICROCASH360 - LOAN ENGINE PRO
-// ===============================
+// ========================================
+// MICROCASH360 - LOAN ENGINE PRO (FINAL)
+// ========================================
 
 export class LoanEngine {
   constructor() {
     this.maxAmount = 2000000;
     this.minAmount = 100000;
+
     this.maxWeeks = 12;
     this.minWeeks = 4;
+
+    this.baseScore = 50;
   }
 
-  // 📊 Calcular préstamo
+  // ========================================
+  // 📊 CALCULAR PRÉSTAMO
+  // ========================================
   calculateLoan(amount, weeks) {
     this.validate(amount, weeks);
 
     const interestRate = this.getInterestRate(weeks);
-    const interest = amount * interestRate;
+    const interest = Math.ceil(amount * interestRate);
     const total = amount + interest;
     const installment = Math.ceil(total / weeks);
 
@@ -25,25 +30,34 @@ export class LoanEngine {
       total,
       weeks,
       installment,
-      interestRate
+      interestRate,
+      createdAt: new Date().toISOString()
     };
   }
 
-  // 🧠 Tasa dinámica (puedes mejorar con IA)
+  // ========================================
+  // 📈 TASA DINÁMICA
+  // ========================================
   getInterestRate(weeks) {
     if (weeks <= 4) return 0.15;
     if (weeks <= 8) return 0.18;
     return 0.22;
   }
 
-  // 🔍 Validaciones reales
+  // ========================================
+  // 🔍 VALIDACIONES
+  // ========================================
   validate(amount, weeks) {
+    if (!amount || !weeks) {
+      throw new Error("Datos incompletos");
+    }
+
     if (amount < this.minAmount) {
-      throw new Error("Monto demasiado bajo");
+      throw new Error(`Monto mínimo: ${this.minAmount}`);
     }
 
     if (amount > this.maxAmount) {
-      throw new Error("Monto demasiado alto");
+      throw new Error(`Monto máximo: ${this.maxAmount}`);
     }
 
     if (weeks < this.minWeeks || weeks > this.maxWeeks) {
@@ -51,31 +65,77 @@ export class LoanEngine {
     }
   }
 
-  // 🧠 Evaluación de riesgo (MVP)
+  // ========================================
+  // 🧠 SCORE DE RIESGO (MEJORADO)
+  // ========================================
   evaluateRisk(user) {
-    let score = 50;
+    let score = this.baseScore;
 
+    // Historial
     if (user.history === "good") score += 30;
-    if (user.history === "bad") score -= 30;
+    if (user.history === "bad") score -= 40;
 
-    if (user.income > 1000000) score += 10;
+    // Ingresos
+    if (user.income >= 1000000) score += 10;
+    if (user.income < 500000) score -= 10;
+
+    // Edad (ejemplo simple)
+    if (user.age >= 25 && user.age <= 55) score += 5;
+
+    // Frecuencia de uso
+    if (user.loansCount > 3) score += 5;
 
     return score;
   }
 
-  // ✅ Aprobación
-  approveLoan(user) {
-    const score = this.evaluateRisk(user);
+  // ========================================
+  // 💰 MONTO MÁXIMO SEGÚN RIESGO
+  // ========================================
+  getMaxAmountByScore(score) {
+    if (score >= 80) return 2000000;
+    if (score >= 70) return 1500000;
+    if (score >= 60) return 1000000;
+    if (score >= 50) return 500000;
+    return 0;
+  }
 
-    if (score >= 60) {
+  // ========================================
+  // ✅ APROBACIÓN FINAL
+  // ========================================
+  approveLoan(user, requestedAmount) {
+    const score = this.evaluateRisk(user);
+    const maxAllowed = this.getMaxAmountByScore(score);
+
+    if (maxAllowed === 0) {
+      return {
+        approved: false,
+        reason: "Riesgo alto",
+        score
+      };
+    }
+
+    if (requestedAmount > maxAllowed) {
       return {
         approved: true,
-        maxAmount: 1000000
+        approvedAmount: maxAllowed,
+        adjusted: true,
+        score
       };
     }
 
     return {
-      approved: false
+      approved: true,
+      approvedAmount: requestedAmount,
+      adjusted: false,
+      score
     };
+  }
+
+  // ========================================
+  // 🧠 HOOK PARA IA FUTURA
+  // ========================================
+  async evaluateWithAI(user) {
+    // Aquí luego conectas modelo IA
+    return this.evaluateRisk(user);
   }
 }
