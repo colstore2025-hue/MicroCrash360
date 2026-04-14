@@ -80,7 +80,10 @@ document.addEventListener("click", async (e) => {
     }
 
     // Crear préstamo real con cuotas
-    const loan = paymentService.createLoan(currentUser.id, currentLoan);
+    const loan = await paymentService.createLoan(
+  currentUser.uid,
+  currentLoan
+);
 
     currentLoan = loan;
 
