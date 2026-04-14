@@ -1,22 +1,37 @@
+import { 
+  auth,
+  signInWithPhoneNumber,
+  RecaptchaVerifier
+} from "../config/firebase.js";
+
 export class AuthService {
   constructor() {
-    this.user = null;
+    this.confirmationResult = null;
+  }
+
+  setupRecaptcha() {
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+      size: "invisible"
+    });
   }
 
   async login(phone) {
-    console.log("OTP enviado a", phone);
+    this.setupRecaptcha();
+
+    const appVerifier = window.recaptchaVerifier;
+
+    this.confirmationResult = await signInWithPhoneNumber(
+      auth,
+      "+57" + phone,
+      appVerifier
+    );
+
     return true;
   }
 
   async verifyOTP(code) {
-    this.user = {
-      id: Date.now(),
-      name: "Usuario",
-    };
-    return this.user;
-  }
+    const result = await this.confirmationResult.confirm(code);
 
-  getUser() {
-    return this.user;
+    return result.user;
   }
 }
