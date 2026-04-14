@@ -8,7 +8,9 @@ import {
   addDoc, 
   getDocs, 
   doc, 
-  updateDoc 
+  updateDoc,
+  query,
+  where
 } from "../config/firebase.js";
 
 export class PaymentService {
