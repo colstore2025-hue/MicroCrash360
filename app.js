@@ -13,9 +13,10 @@ import { renderSimulation } from "./ui/simulationUI.js";
 
 import { render } from "./core/router.js";
 
-// INSTANCIAS
-const app = document.getElementById("app");
+// DEBUG INICIAL
+console.log("🚀 MicroCash360 iniciando...");
 
+// INSTANCIAS
 const auth = new AuthService();
 const loanEngine = new LoanEngine();
 const paymentService = new PaymentService();
@@ -24,116 +25,140 @@ const paymentService = new PaymentService();
 let currentUser = null;
 let currentLoan = null;
 
-// INIT
-render(app, renderLogin());
+// INIT APP CUANDO EL DOM ESTÉ LISTO
+document.addEventListener("DOMContentLoaded", () => {
+  const app = document.getElementById("app");
 
-// ========================================
-// EVENTOS PRINCIPALES
-// ========================================
+  if (!app) {
+    console.error("❌ ERROR: No existe #app en index.html");
+    return;
+  }
 
-document.addEventListener("click", async (e) => {
+  console.log("✅ UI montada correctamente");
 
-  // =========================
-  // LOGIN
-  // =========================
-  if (e.target.id === "loginBtn") {
-    try {
-      const phone = document.getElementById("phone").value;
+  render(app, renderLogin());
 
-      await auth.login(phone);
+  // ========================================
+  // EVENTOS PRINCIPALES
+  // ========================================
 
-      // ⚠️ Aquí deberías pedir el OTP real en UI
-      currentUser = await auth.verifyOTP("0000");
+  document.addEventListener("click", async (e) => {
 
-      // 🔥 Cargar préstamos del usuario
-      const loans = await paymentService.getUserLoans(currentUser.uid);
+    // =========================
+    // LOGIN
+    // =========================
+    if (e.target.id === "loginBtn") {
+      try {
+        const phone = document.getElementById("phone").value;
 
-      if (loans.length > 0) {
-        currentLoan = loans[0];
-        showLoanDetail(currentLoan);
-      } else {
-        render(app, renderDashboard(currentUser));
+        if (!phone) {
+          alert("Ingresa número de teléfono");
+          return;
+        }
+
+        await auth.login(phone);
+
+        currentUser = await auth.verifyOTP("0000");
+
+        console.log("✅ Usuario autenticado:", currentUser);
+
+        const loans = await paymentService.getUserLoans(currentUser.uid);
+
+        if (loans.length > 0) {
+          currentLoan = loans[0];
+          showLoanDetail(app, currentLoan);
+        } else {
+          render(app, renderDashboard(currentUser));
+        }
+
+      } catch (err) {
+        console.error(err);
+        alert("Error en login: " + err.message);
       }
-
-    } catch (err) {
-      alert("Error en login: " + err.message);
     }
-  }
 
-  // =========================
-  // SIMULAR PRÉSTAMO
-  // =========================
-  if (e.target.id === "simulateBtn") {
-    try {
-      const amount = Number(document.getElementById("amount").value);
+    // =========================
+    // SIMULAR PRÉSTAMO
+    // =========================
+    if (e.target.id === "simulateBtn") {
+      try {
+        const amount = Number(document.getElementById("amount").value);
 
-      const result = loanEngine.calculateLoan(amount, 10);
+        const result = loanEngine.calculateLoan(amount, 10);
 
-      currentLoan = result;
+        currentLoan = result;
 
-      render(app, renderSimulation(result));
+        render(app, renderSimulation(result));
 
-    } catch (err) {
-      alert(err.message);
-    }
-  }
-
-  // =========================
-  // SOLICITAR PRÉSTAMO
-  // =========================
-  if (e.target.id === "requestBtn") {
-    try {
-      const approval = loanEngine.approveLoan(
-        {
-          history: "good",
-          income: 1200000,
-          age: 30,
-          loansCount: 1
-        },
-        currentLoan.amount
-      );
-
-      if (!approval.approved) {
-        app.innerHTML = `<h1>❌ Crédito rechazado</h1>`;
-        return;
+      } catch (err) {
+        console.error(err);
+        alert(err.message);
       }
-
-      // 🔥 Crear préstamo en Firebase
-      const loan = await paymentService.createLoan(
-        currentUser.uid,
-        currentLoan
-      );
-
-      currentLoan = loan;
-
-      showLoanDetail(loan);
-
-    } catch (err) {
-      alert("Error al crear préstamo: " + err.message);
     }
-  }
 
-  // =========================
-  // PAGAR CUOTA
-  // =========================
-  if (e.target.dataset.pay) {
-    try {
-      const installmentNumber = Number(e.target.dataset.pay);
+    // =========================
+    // SOLICITAR PRÉSTAMO
+    // =========================
+    if (e.target.id === "requestBtn") {
+      try {
+        if (!currentUser || !currentLoan) {
+          alert("Datos incompletos");
+          return;
+        }
 
-      const updatedInstallments = await paymentService.payInstallment(
-        currentLoan.id,
-        installmentNumber
-      );
+        const approval = loanEngine.approveLoan(
+          {
+            history: "good",
+            income: 1200000,
+            age: 30,
+            loansCount: 1
+          },
+          currentLoan.amount
+        );
 
-      // actualizar local
-      currentLoan.installments = updatedInstallments;
+        if (!approval.approved) {
+          app.innerHTML = `<h1>❌ Crédito rechazado</h1>`;
+          return;
+        }
 
-      showLoanDetail(currentLoan);
+        const loan = await paymentService.createLoan(
+          currentUser.uid,
+          currentLoan
+        );
 
-    } catch (err) {
-      alert(err.message);
+        currentLoan = loan;
+
+        showLoanDetail(app, loan);
+
+      } catch (err) {
+        console.error(err);
+        alert("Error al crear préstamo: " + err.message);
+      }
     }
-  }
+
+    // =========================
+    // PAGAR CUOTA
+    // =========================
+    if (e.target.dataset.pay) {
+      try {
+        const installmentNumber = Number(e.target.dataset.pay);
+
+        const updatedInstallments = await paymentService.payInstallment(
+          currentLoan.id,
+          installmentNumber
+        );
+
+        currentLoan.installments = updatedInstallments;
+
+        showLoanDetail(app, currentLoan);
+
+      } catch (err) {
+        console.error(err);
+        alert(err.message);
+      }
+    }
+
+  });
 
 });
 
@@ -141,7 +166,7 @@ document.addEventListener("click", async (e) => {
 // UI DETALLE DE PRÉSTAMO
 // ========================================
 
-function showLoanDetail(loan) {
+function showLoanDetail(app, loan) {
 
   const summary = paymentService.getLoanSummary(loan);
 
@@ -177,22 +202,3 @@ function showLoanDetail(loan) {
     </div>
   `;
 }
-
-// ========================================
-// (OPCIONAL) LOOP DE COBRANZA FUTURO
-// ========================================
-
-// ⚠️ Desactivado porque ahora usas Firebase
-// Esto luego va en backend (Node.js / Cloud Functions)
-
-/*
-setInterval(() => {
-  paymentService.checkLatePayments();
-
-  const actions = paymentService.getCollectionActions();
-
-  if (actions.length > 0) {
-    console.log("⚠️ Acciones de cobranza:", actions);
-  }
-}, 5000);
-*/
