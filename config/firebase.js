@@ -58,10 +58,11 @@ try {
 // 🔐 AUTH
 // ========================================
 
-export const auth = getAuth();
+const authInstance = getAuth(app);
 
-// 🔥 IMPORTANTE: fuerza contexto navegador
-auth.useDeviceLanguage();
+authInstance.useDeviceLanguage();
+
+export const auth = authInstance;
 
 // ========================================
 // 🗄️ FIRESTORE
