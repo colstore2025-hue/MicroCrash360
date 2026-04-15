@@ -1,3 +1,4 @@
+console.log("🔥 APP INICIANDO");
 // ========================================
 // MICROCASH360 - APP CONTROLLER PRO FINAL
 // ========================================
