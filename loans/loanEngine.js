@@ -88,6 +88,23 @@ export class LoanEngine {
     return score;
   }
 
+getUserScore(loans = []) {
+  let score = 50;
+
+  loans.forEach(loan => {
+    const paid = loan.installments.filter(i => i.status === "paid").length;
+    const total = loan.installments.length;
+
+    const ratio = paid / total;
+
+    if (ratio > 0.9) score += 20;
+    else if (ratio > 0.7) score += 10;
+    else score -= 10;
+  });
+
+  return Math.max(0, Math.min(100, score));
+}
+
   // ========================================
   // 💰 MONTO MÁXIMO SEGÚN SCORE
   // ========================================
