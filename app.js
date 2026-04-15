@@ -1,4 +1,5 @@
-console.log("🔥 APP INICIANDO");
+console.log("🔥 APP CARGADA DESDE VERCEL");
+document.getElementById("app").innerHTML = "<h1>🔥 APP FUNCIONANDO</h1>";
 
 // ========================================
 // MICROCASH360 - APP CONTROLLER PRO FINAL
