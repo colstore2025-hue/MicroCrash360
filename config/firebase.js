@@ -1,15 +1,9 @@
-// ===============================
-// FIREBASE INIT (REAL)
-// ===============================
+// ========================================
+// MICROCASH360 - FIREBASE CONFIG PRO
+// ========================================
 
+// 🔥 IMPORTS FIREBASE (CDN)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-
-import { 
-  query, 
-  where 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-export { query, where };
 
 import { 
   getAuth, 
@@ -23,10 +17,12 @@ import {
   addDoc,
   getDocs,
   doc,
-  updateDoc
+  updateDoc,
+  query,
+  where
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// 🔑 TU CONFIG REAL
+// 🔑 CONFIG REAL
 const firebaseConfig = {
   apiKey: "AIzaSyCS9blfYpQTzOkKKondQjGmwC0mEqWMZGQ",
   authDomain: "microcash360.firebaseapp.com",
@@ -36,19 +32,27 @@ const firebaseConfig = {
   appId: "1:605473385081:web:54453aa4fd563eca0842a8"
 };
 
-// INIT
+// 🚀 INIT APP
 const app = initializeApp(firebaseConfig);
 
+// 🔐 AUTH
 export const auth = getAuth(app);
+
+// 🗄️ FIRESTORE
 export const db = getFirestore(app);
 
-// EXPORTS
+// 📦 EXPORTS CENTRALIZADOS
 export {
+  // AUTH
   signInWithPhoneNumber,
   RecaptchaVerifier,
+
+  // FIRESTORE
   collection,
   addDoc,
   getDocs,
   doc,
-  updateDoc
+  updateDoc,
+  query,
+  where
 };
