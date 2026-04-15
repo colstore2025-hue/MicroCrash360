@@ -16,20 +16,28 @@ import { renderSimulation } from "./ui/simulationUI.js";
 
 import { render } from "./core/router.js";
 
-// DEBUG
-console.log("🚀 MicroCash360 iniciando...");
-
+// ========================================
 // INSTANCIAS
+// ========================================
+
 const auth = new AuthService();
 const loanEngine = new LoanEngine();
 const paymentService = new PaymentService();
 
+// ========================================
 // ESTADO GLOBAL
+// ========================================
+
 let currentUser = null;
 let currentLoan = null;
+let userLoans = [];
 
-// INIT
+// ========================================
+// INIT APP
+// ========================================
+
 document.addEventListener("DOMContentLoaded", () => {
+
   const app = document.getElementById("app");
 
   if (!app) {
@@ -37,12 +45,12 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  console.log("✅ UI montada");
+  console.log("✅ UI montada correctamente");
 
   render(app, renderLogin());
 
   // ========================================
-  // EVENTOS
+  // EVENTOS GLOBALES
   // ========================================
 
   document.addEventListener("click", async (e) => {
@@ -63,7 +71,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         console.log("📩 SMS enviado");
 
-        // 👉 IR A OTP
         render(app, renderOTP());
 
       } catch (err) {
@@ -79,19 +86,29 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const code = document.getElementById("otp").value;
 
+        if (!code) {
+          alert("Ingresa código");
+          return;
+        }
+
         currentUser = await auth.verifyOTP(code);
 
         console.log("✅ Usuario autenticado:", currentUser);
 
-        // 🔥 Cargar préstamos
-        const loans = await paymentService.getUserLoans(currentUser.uid);
+        // 🔥 Cargar préstamos reales
+        userLoans = await paymentService.getUserLoans(currentUser.uid);
 
-        if (loans.length > 0) {
-          currentLoan = loans[0];
-          showLoanDetail(app, currentLoan);
-        } else {
-          render(app, renderDashboard(currentUser));
+        if (userLoans.length > 0) {
+          currentLoan = userLoans[0];
         }
+
+        const score = loanEngine.getUserScore(userLoans);
+
+        render(app, renderDashboard(currentUser, {
+          balance: 2000000,
+          activeLoan: currentLoan,
+          score
+        }));
 
       } catch (err) {
         console.error(err);
@@ -100,10 +117,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =========================
-    // VOLVER
+    // VOLVER LOGIN
     // =========================
     if (e.target.id === "backBtn") {
       render(app, renderLogin());
+    }
+
+    // =========================
+    // VER PRÉSTAMO
+    // =========================
+    if (e.target.id === "viewLoanBtn") {
+      showLoanDetail(app, currentLoan);
     }
 
     // =========================
@@ -112,6 +136,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target.id === "simulateBtn") {
       try {
         const amount = Number(document.getElementById("amount").value);
+
+        if (!amount) {
+          alert("Ingresa monto");
+          return;
+        }
 
         const result = loanEngine.calculateLoan(amount, 10);
 
@@ -140,7 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
             history: "good",
             income: 1200000,
             age: 30,
-            loansCount: 1
+            loansCount: userLoans.length
           },
           currentLoan.amount
         );
@@ -192,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ========================================
-// DETALLE PRÉSTAMO
+// DETALLE PRÉSTAMO (UI PRO)
 // ========================================
 
 function showLoanDetail(app, loan) {
@@ -200,7 +229,7 @@ function showLoanDetail(app, loan) {
   const summary = paymentService.getLoanSummary(loan);
 
   const installmentsHTML = loan.installments.map(inst => `
-    <div style="margin-bottom:10px; padding:10px; background:#111; border-radius:10px;">
+    <div style="margin-bottom:10px; padding:15px; background:#111; border-radius:12px;">
       <p><strong>Cuota #${inst.number}</strong></p>
       <p>Valor: $${inst.amount}</p>
       <p>Estado: ${inst.status}</p>
@@ -214,12 +243,15 @@ function showLoanDetail(app, loan) {
 
   app.innerHTML = `
     <div class="screen">
+
       <h2>💳 Préstamo activo</h2>
 
-      <p>Total: $${summary.total}</p>
-      <p>Pagado: $${summary.paid}</p>
-      <p>Pendiente: $${summary.pending}</p>
-      <p>Estado: ${summary.status}</p>
+      <div class="card">
+        <p>Total: $${summary.total}</p>
+        <p>Pagado: $${summary.paid}</p>
+        <p>Pendiente: $${summary.pending}</p>
+        <p>Estado: ${summary.status}</p>
+      </div>
 
       <hr>
 
@@ -227,7 +259,8 @@ function showLoanDetail(app, loan) {
       ${installmentsHTML}
 
       <br>
-      <button onclick="location.reload()">Volver</button>
+      <button onclick="location.reload()">⬅ Volver</button>
+
     </div>
   `;
 }
