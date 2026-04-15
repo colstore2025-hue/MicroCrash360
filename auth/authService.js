@@ -11,20 +11,24 @@ export class AuthService {
 
   setupRecaptcha() {
     if (!window.recaptchaVerifier) {
+
       window.recaptchaVerifier = new RecaptchaVerifier(
-        "recaptcha-container",
-        { size: "invisible" },
-        auth
+        "recaptcha-container", // 🔥 PRIMERO EL ID
+        {
+          size: "invisible",
+          callback: () => {
+            console.log("✅ reCAPTCHA resuelto");
+          }
+        },
+        auth // 🔥 AUTH VA AL FINAL
       );
+
+      window.recaptchaVerifier.render();
     }
   }
 
   async login(phone) {
-    if (!phone) throw new Error("Ingresa un número");
-
-    phone = phone.replace(/\D/g, "");
-
-    if (phone.length !== 10) {
+    if (!phone || phone.length < 10) {
       throw new Error("Número inválido");
     }
 
@@ -32,9 +36,13 @@ export class AuthService {
 
     const appVerifier = window.recaptchaVerifier;
 
+    const fullPhone = "+57" + phone;
+
+    console.log("📞 Enviando SMS a:", fullPhone);
+
     this.confirmationResult = await signInWithPhoneNumber(
       auth,
-      "+57" + phone,
+      fullPhone,
       appVerifier
     );
 
@@ -43,11 +51,7 @@ export class AuthService {
 
   async verifyOTP(code) {
     if (!this.confirmationResult) {
-      throw new Error("Primero solicita el código");
-    }
-
-    if (!code || code.length < 6) {
-      throw new Error("Código inválido");
+      throw new Error("No se ha enviado el código");
     }
 
     const result = await this.confirmationResult.confirm(code);
