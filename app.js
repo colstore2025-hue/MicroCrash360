@@ -1,4 +1,5 @@
 console.log("🔥 APP INICIANDO");
+
 // ========================================
 // MICROCASH360 - APP CONTROLLER PRO FINAL
 // ========================================
@@ -9,12 +10,13 @@ import { LoanEngine } from "./loans/loanEngine.js";
 import { PaymentService } from "./payments/paymentService.js";
 
 import { renderLogin } from "./ui/loginUI.js";
+import { renderOTP } from "./ui/otpUI.js";
 import { renderDashboard } from "./ui/dashboardUI.js";
 import { renderSimulation } from "./ui/simulationUI.js";
 
 import { render } from "./core/router.js";
 
-// DEBUG INICIAL
+// DEBUG
 console.log("🚀 MicroCash360 iniciando...");
 
 // INSTANCIAS
@@ -26,43 +28,62 @@ const paymentService = new PaymentService();
 let currentUser = null;
 let currentLoan = null;
 
-// INIT APP CUANDO EL DOM ESTÉ LISTO
+// INIT
 document.addEventListener("DOMContentLoaded", () => {
   const app = document.getElementById("app");
 
   if (!app) {
-    console.error("❌ ERROR: No existe #app en index.html");
+    console.error("❌ No existe #app");
     return;
   }
 
-  console.log("✅ UI montada correctamente");
+  console.log("✅ UI montada");
 
   render(app, renderLogin());
 
   // ========================================
-  // EVENTOS PRINCIPALES
+  // EVENTOS
   // ========================================
 
   document.addEventListener("click", async (e) => {
 
     // =========================
-    // LOGIN
+    // LOGIN → ENVÍA SMS
     // =========================
     if (e.target.id === "loginBtn") {
       try {
         const phone = document.getElementById("phone").value;
 
         if (!phone) {
-          alert("Ingresa número de teléfono");
+          alert("Ingresa número");
           return;
         }
 
         await auth.login(phone);
 
-        currentUser = await auth.verifyOTP("0000");
+        console.log("📩 SMS enviado");
+
+        // 👉 IR A OTP
+        render(app, renderOTP());
+
+      } catch (err) {
+        console.error(err);
+        alert("Error enviando SMS: " + err.message);
+      }
+    }
+
+    // =========================
+    // VERIFICAR OTP
+    // =========================
+    if (e.target.id === "verifyBtn") {
+      try {
+        const code = document.getElementById("otp").value;
+
+        currentUser = await auth.verifyOTP(code);
 
         console.log("✅ Usuario autenticado:", currentUser);
 
+        // 🔥 Cargar préstamos
         const loans = await paymentService.getUserLoans(currentUser.uid);
 
         if (loans.length > 0) {
@@ -74,8 +95,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
       } catch (err) {
         console.error(err);
-        alert("Error en login: " + err.message);
+        alert("Código incorrecto");
       }
+    }
+
+    // =========================
+    // VOLVER
+    // =========================
+    if (e.target.id === "backBtn") {
+      render(app, renderLogin());
     }
 
     // =========================
@@ -164,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ========================================
-// UI DETALLE DE PRÉSTAMO
+// DETALLE PRÉSTAMO
 // ========================================
 
 function showLoanDetail(app, loan) {
