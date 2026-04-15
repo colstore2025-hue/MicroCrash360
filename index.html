@@ -1,13 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>MicroCash360</title>
-</head>
-<body>
-<div id="app"></div>
-<div id="recaptcha-container"></div>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<script type="module" src="/app.js"></script>
-  
+  <title>MicroCash360</title>
+
+  <!-- 🔥 Estilos -->
+  <link rel="stylesheet" href="/styles.css" />
+
+  <!-- 🔥 Debug -->
+  <script>
+    console.log("✅ HTML cargado");
+  </script>
+</head>
+
+<body>
+
+  <!-- APP ROOT -->
+  <div id="app"></div>
+
+  <!-- 🔐 Firebase reCAPTCHA -->
+  <div id="recaptcha-container"></div>
+
+  <!-- 🚀 APP -->
+  <script type="module">
+    console.log("🚀 Cargando app.js...");
+    import "/app.js";
+  </script>
+
 </body>
 </html>
