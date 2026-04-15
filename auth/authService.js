@@ -1,58 +1,57 @@
-console.log("🔥 AUTH SERVICE CARGADO");
-// ========================================
-// MICROCASH360 - AUTH SERVICE PRO
-// ========================================
-
-import { auth } from "../config/firebase.js";
-import { signInWithPhoneNumber, RecaptchaVerifier } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { 
+  auth,
+  signInWithPhoneNumber,
+  RecaptchaVerifier
+} from "../config/firebase.js";
 
 export class AuthService {
   constructor() {
     this.confirmationResult = null;
-    this.recaptchaVerifier = null;
   }
 
   setupRecaptcha() {
-    if (!this.recaptchaVerifier) {
-      this.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-        size: "invisible"
-      });
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        "recaptcha-container",
+        { size: "invisible" },
+        auth
+      );
     }
   }
 
   async login(phone) {
-    try {
-      this.setupRecaptcha();
+    if (!phone) throw new Error("Ingresa un número");
 
-      const appVerifier = this.recaptchaVerifier;
+    phone = phone.replace(/\D/g, "");
 
-      this.confirmationResult = await signInWithPhoneNumber(
-        auth,
-        "+57" + phone,
-        appVerifier
-      );
-
-      console.log("✅ OTP enviado");
-
-      return true;
-
-    } catch (error) {
-      console.error("❌ Error login:", error);
-      throw error;
+    if (phone.length !== 10) {
+      throw new Error("Número inválido");
     }
+
+    this.setupRecaptcha();
+
+    const appVerifier = window.recaptchaVerifier;
+
+    this.confirmationResult = await signInWithPhoneNumber(
+      auth,
+      "+57" + phone,
+      appVerifier
+    );
+
+    return true;
   }
 
   async verifyOTP(code) {
-    try {
-      const result = await this.confirmationResult.confirm(code);
-
-      console.log("✅ Usuario verificado");
-
-      return result.user;
-
-    } catch (error) {
-      console.error("❌ Error OTP:", error);
-      throw error;
+    if (!this.confirmationResult) {
+      throw new Error("Primero solicita el código");
     }
+
+    if (!code || code.length < 6) {
+      throw new Error("Código inválido");
+    }
+
+    const result = await this.confirmationResult.confirm(code);
+
+    return result.user;
   }
 }
