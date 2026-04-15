@@ -1,10 +1,15 @@
-console.log("🔥 FIREBASE CARGADO");
 // ========================================
-// MICROCASH360 - FIREBASE CONFIG PRO
+// 🔥 MICROCASH360 - FIREBASE CONFIG PRO
 // ========================================
 
-// 🔥 IMPORTS FIREBASE (CDN)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+console.log("🔥 Inicializando Firebase...");
+
+// ========================================
+// 📦 IMPORTS (CDN - COMPATIBLE CON VERCEL)
+// ========================================
+
+import { initializeApp } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
 import { 
   getAuth, 
@@ -23,26 +28,48 @@ import {
   where
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// 🔑 CONFIG REAL
+// ========================================
+// 🔑 CONFIGURACIÓN REAL
+// ========================================
+
 const firebaseConfig = {
   apiKey: "AIzaSyCS9blfYpQTzOkKKondQjGmwC0mEqWMZGQ",
   authDomain: "microcash360.firebaseapp.com",
   projectId: "microcash360",
-  storageBucket: "microcash360.firebasestorage.app",
+  storageBucket: "microcash360.appspot.com", // 🔥 CORREGIDO
   messagingSenderId: "605473385081",
   appId: "1:605473385081:web:54453aa4fd563eca0842a8"
 };
 
-// 🚀 INIT APP
-const app = initializeApp(firebaseConfig);
+// ========================================
+// 🚀 INICIALIZACIÓN SEGURA
+// ========================================
 
+let app;
+
+try {
+  app = initializeApp(firebaseConfig);
+  console.log("✅ Firebase inicializado correctamente");
+} catch (err) {
+  console.error("❌ Error inicializando Firebase:", err);
+}
+
+// ========================================
 // 🔐 AUTH
+// ========================================
+
 export const auth = getAuth(app);
 
+// ========================================
 // 🗄️ FIRESTORE
+// ========================================
+
 export const db = getFirestore(app);
 
+// ========================================
 // 📦 EXPORTS CENTRALIZADOS
+// ========================================
+
 export {
   // AUTH
   signInWithPhoneNumber,
@@ -57,3 +84,15 @@ export {
   query,
   where
 };
+
+// ========================================
+// 🧪 DEBUG GLOBAL
+// ========================================
+
+window.firebaseDebug = {
+  app,
+  auth,
+  db
+};
+
+console.log("🔥 Firebase listo para usar");
