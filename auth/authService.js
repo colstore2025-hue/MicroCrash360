@@ -1,3 +1,4 @@
+console.log("AUTH:", auth);
 import { 
   auth,
   signInWithPhoneNumber,
