@@ -1,3 +1,4 @@
+console.log("🔥 FIREBASE CARGADO");
 // ========================================
 // MICROCASH360 - FIREBASE CONFIG PRO
 // ========================================
