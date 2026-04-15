@@ -1,3 +1,4 @@
+console.log("🔥 AUTH SERVICE CARGADO");
 // ========================================
 // MICROCASH360 - AUTH SERVICE PRO
 // ========================================
